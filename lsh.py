@@ -13,7 +13,7 @@ from abc import abstractmethod
 from itertools import izip, imap, chain
 from functools import partial
 from math import sqrt
-import random
+from random import gauss as random_gauss, uniform as random_uniform, randint as random_int
 from collections import defaultdict
 from operator import itemgetter
 
@@ -167,7 +167,7 @@ class L1HashFamily(HashFamily):
     def get_projection(self):
         """Return a vector of size d drawn from a uniform
         distribution from 0 to w"""
-        return gapply(self.size, random.uniform, 0, self.w)
+        return gapply(self.size, random_uniform, 0, self.w)
 
 
 class L2HashFamily(HashFamily):
@@ -185,13 +185,13 @@ class L2HashFamily(HashFamily):
         """initialize each L2Hash with a different random projection vector
         and offset
         """
-        return L2Hash(self.get_projection(), random.uniform(0, self.w), self.w)
+        return L2Hash(self.get_projection(), random_uniform(0, self.w), self.w)
 
     def get_projection(self):
         """Return a vector of size d drawn from a Gaussian
         distribution with mean 0 and sigma 1
         """
-        return gapply(self.size, random.gauss, 0, 1)
+        return gapply(self.size, random_gauss, 0, 1)
 
 
 class CosineHashFamily(HashFamily):
@@ -202,7 +202,7 @@ class CosineHashFamily(HashFamily):
 
     def get_projection(self):
         """Random projection vector"""
-        return gapply(self.size, random.gauss, 0, 1)
+        return gapply(self.size, random_gauss, 0, 1)
 
     def combine(self, hashes):
         """ combine by treating as a bit-vector """
@@ -363,7 +363,7 @@ if __name__ == "__main__":
     num_points = 1000
     points = lapply(num_points,  # rows (number of vectors)
                     lapply, d,   # columns (vector cardinality)
-                    random.randint, 0, xmax)
+                    random_int, 0, xmax)
 
     # seed the dataset with a fixed number of nearest neighbours
     # within a given small "radius"
@@ -371,7 +371,7 @@ if __name__ == "__main__":
     radius = 0.1
     for point in points[:num_points]:
         for i in xrange(num_neighbours):
-            points.append([x + random.uniform(-radius, radius)
+            points.append([x + random_uniform(-radius, radius)
                            for x in point])
 
     # test lsh versus brute force comparison by running a grid
