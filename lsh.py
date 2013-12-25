@@ -323,11 +323,13 @@ class LSHTester:
         :param name:        name of test
         :param metric:      distance metric for nearest neighbour computation
         :param hash_family: hash family for LSH
-        :param k_vals:      numbers of hashes to concatenate in each hash function
-                            to try in grid search
-        :param L_vals:      numbers of hash functions/tables to try in grid search
+        :param k_vals:      numbers of hashes to concatenate in each hash
+                            function to try in grid search
+        :param L_vals:      numbers of hash functions/tables to try in grid
+                            search
         """
-        exact_hits = [map(first, self.linear(query, metric, self.num_neighbours + 1))
+        exact_hits = [map(first,
+                          self.linear(query, metric, self.num_neighbours + 1))
                       for query in self.queries]
 
         print name
@@ -353,11 +355,10 @@ class LSHTester:
 
 
 if __name__ == "__main__":
-
     # create a test dataset of vectors of non-negative integers
     d = 5
     xmax = 20
-    num_points = 10
+    num_points = 1000
     points = [[random.randint(0, xmax) for i in xrange(d)]
               for j in xrange(num_points)]
 
