@@ -345,7 +345,7 @@ class LSHTester:
 
         print name, len(self.queries), "queries"
         print "{0:>4} {1:>4} {2:>8} {3:>8} {4:>8} {5:>8} {6:>8}"\
-            .format('L', 'k', 'accur', 'touch', 'ms', 'q-size', 'd-ratio')
+            .format('L', 'k', 'recall', 'touch', 'q-size', 'd-ratio', 'ms')
 
         for k in k_vals:
             # concatenating more hash functions increases selectivity
@@ -375,10 +375,10 @@ class LSHTester:
                 avg_dist_ratio = total_dist_ratio / float(lsh.num_queries)
                 avg_search_time = 1000.0 * total_search_time / float(lsh.num_queries)
                 avg_query_size = total_result_size / float(lsh.num_queries)
-                accur = float(correct) / float(lsh.num_queries)
+                recall = float(correct) / float(lsh.num_queries)
                 touch = float(lsh.get_avg_touched()) / float(len(self.points))
                 print "{0:>4} {1:>4} {2:>8.0%} {3:>8.2%} {4:>8.2} {5:>8.2} {6:>8.2}"\
-                    .format(L, k, accur, touch, avg_query_size, avg_dist_ratio, avg_search_time)
+                    .format(L, k, recall, touch, avg_query_size, avg_dist_ratio, avg_search_time)
 
 
 if __name__ == "__main__":
