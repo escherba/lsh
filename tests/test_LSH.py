@@ -1,7 +1,7 @@
 __author__ = 'escherba'
 
 import unittest
-from lsh import L1HashFamily, L2HashFamily, CosineHashFamily
+from ann import L1HashFamily, L2HashFamily, CosineHashFamily
 
 
 class MyTestCase(unittest.TestCase):

@@ -2,7 +2,7 @@ __author__ = 'escherba'
 
 import random
 import unittest
-from lsh import CosineHashFamily, LSHIndex
+from ann import CosineHashFamily, LSHIndex
 
 
 class MyTestCase(unittest.TestCase):

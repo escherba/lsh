@@ -1,6 +1,6 @@
 """
-LSH Locality Sensitive Hashing
-- indexing for nearest neighbour searches in sublinear time
+Nearest neighbour searches in sublinear time
+using LSH Locality Sensitive Hashing
 
 simple tutorial implementation based on
 A. Andoni and P. Indyk, "Near-optimal hashing algorithms for approximate

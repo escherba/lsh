@@ -7,7 +7,7 @@ from random import randint as random_int
 from operator import itemgetter
 from itertools import izip
 
-import lsh
+import ann
 from util import first, second, last
 
 
@@ -58,7 +58,7 @@ class LSHTester:
 
         for k in k_vals:
             # concatenating more hash functions increases selectivity
-            lsh_index = lsh.LSHIndex(hash_family, k, 0)
+            lsh_index = ann.LSHIndex(hash_family, k, 0)
             for L in L_vals:
                 # using more hash tables increases recall
                 lsh_index.resize(L)
@@ -96,9 +96,9 @@ class MyTestCase(unittest.TestCase):
         # create a test dataset of vectors of non-negative integers
         d = 5
         xmax = 20
-        num_points = 10
-        points = lsh.lapply(num_points,  # rows (number of vectors)
-                            lsh.lapply, d,   # columns (vector cardinality)
+        num_points = 1000
+        points = ann.lapply(num_points,  # rows (number of vectors)
+                            ann.lapply, d,   # columns (vector cardinality)
                             random_int, 0, xmax)
 
         # seed the dataset with a fixed number of nearest neighbours
@@ -107,7 +107,7 @@ class MyTestCase(unittest.TestCase):
         radius = 1.0
         for point in points[:num_points]:
             for i in xrange(num_neighbours):
-                points.append([x + lsh.random_gauss(0, radius)
+                points.append([x + ann.random_gauss(0, radius)
                               for x in point])
 
         #import json
@@ -119,22 +119,22 @@ class MyTestCase(unittest.TestCase):
         tester = LSHTester(points, points[:int(num_points / 10)], num_neighbours)
 
         args = {'name': 'L1 (Rectilinear)',
-                'metric': lsh.L1_norm,
-                'hash_family': lsh.L1HashFamily(d, 10 * radius),
+                'metric': ann.L1_norm,
+                'hash_family': ann.L1HashFamily(d, 10 * radius),
                 'k_vals': [2, 4, 8],
                 'L_vals': [2, 4, 8, 16]}
         tester.run(**args)
 
         args = {'name': 'L2 (Euclidean)',
-                'metric': lsh.L2_norm,
-                'hash_family': lsh.L2HashFamily(d, 10 * radius),
+                'metric': ann.L2_norm,
+                'hash_family': ann.L2HashFamily(d, 10 * radius),
                 'k_vals': [2, 4, 8],
                 'L_vals': [2, 4, 8, 16]}
         tester.run(**args)
 
         args = {'name': 'Cosine',
-                'metric': lsh.Cosine_norm,
-                'hash_family': lsh.CosineHashFamily(d),
+                'metric': ann.Cosine_norm,
+                'hash_family': ann.CosineHashFamily(d),
                 'k_vals': [16, 32, 64],
                 'L_vals': [1, 2, 4, 8]}
         tester.run(**args)
