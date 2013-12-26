@@ -13,7 +13,8 @@ from abc import abstractmethod
 from itertools import izip, imap, chain
 from functools import partial
 from math import sqrt
-from random import gauss as random_gauss, uniform as random_uniform, randint as random_int
+from random import gauss as random_gauss, \
+    uniform as random_uniform, randint as random_int
 from collections import defaultdict
 from operator import itemgetter
 
@@ -223,8 +224,8 @@ class LSHIndex:
         """Initialize
 
         :param hash_family: HashFamily instance
-        :param k:
-        :param L: size of the hash family (integer)
+        :param k: hash table size (increases selectivity)
+        :param L: number of hash tables (increases recall)
         """
         self.hash_family = hash_family
         self.k = k
@@ -234,7 +235,7 @@ class LSHIndex:
 
     def resize(self, L):
         """ update the number of hash tables to be used
-        :param L: Number of hash functions/tables to add
+        :param L: number of hash tables (increases recall)
         """
         if L < self.L:
             self.hash_tables = self.hash_tables[:L]
@@ -246,14 +247,14 @@ class LSHIndex:
             self.hash_tables.extend((g, defaultdict(list))
                                     for g in hash_funcs)
 
-    def hash(self, g, p):
+    def hash(self, g, point):
         """
 
-        :param g:
-        :param p: A point vector
-        :return:  A combined hash digest
+        :param g:     A vector of Hash instances
+        :param point: A point vector
+        :return:      A combined hash digest
         """
-        return self.hash_family.combine(h.hash(p) for h in g)
+        return self.hash_family.combine(h.hash(point) for h in g)
 
     def index(self, pts):
         """ index the supplied points
@@ -269,13 +270,13 @@ class LSHIndex:
         self.num_queries = 0
 
     def query(self, query, metric, max_results):
-        """ find the max_results closest indexed points to q according
+        """ find the max_results closest indexed points to query according
         to the supplied metric
-        :param query:           Query
-        :param metric:      Distance metric to use
-        :param max_results: Maximum number of results to return
-        :returns : sorted list of tuples of form <index, distance>
-        :rtype :  list
+        :param query:       query vector
+        :param metric:      distance metric to use
+        :param max_results: maximum number of results to return
+        :returns :          sorted list of tuples of form <index, distance>
+        :rtype :            list
         """
         candidates = set(chain.from_iterable(
             table.get(self.hash(g, query), [])
@@ -309,11 +310,12 @@ class LSHTester:
 
     def linear(self, query, metric, max_results):
         """ perform brute-force search by linear scan
-        :param q:           Query
+
+        :param query:       Query vector
         :param metric:      Distance metric to use
         :param max_results: Maximum number of results to return
-        :returns : sorted list of tuples of form <index, distance>
-        :rtype :  list
+        :returns :          sorted list of tuples of form <index, distance>
+        :rtype :            list
         """
         return sorted(enumerate(map(partial(metric, query), self.points)),
                       key=itemgetter(1))[:max_results]
@@ -334,7 +336,7 @@ class LSHTester:
                       for query in self.queries]
 
         print name
-        print 'L\tk\tqueries\taccur\ttouch'
+        print 'L\tk\tqueries\t%acc\t%touch'
 
         for k in k_vals:
             # concatenating more hash functions increases selectivity
@@ -345,15 +347,15 @@ class LSHTester:
                 lsh.index(self.points)
 
                 correct = 0
-                for q, hits in izip(self.queries, exact_hits):
-                    lsh_query = lsh.query(q, metric, self.num_neighbours + 1)
+                for query, hits in izip(self.queries, exact_hits):
+                    lsh_query = lsh.query(query, metric, self.num_neighbours + 1)
                     if hits == map(first, lsh_query):
                         correct += 1
 
-                acc = float(correct) / float(lsh.num_queries)
-                touch = float(lsh.get_avg_touched()) / float(len(self.points))
-                print "{0}\t{1}\t{2}\t{3}\t{4}".format(
-                    L, k, lsh.num_queries, acc, touch)
+                accur = float(correct) / float(lsh.num_queries) * 100.0
+                touch = float(lsh.get_avg_touched()) / float(len(self.points)) * 100.0
+                print "{0}\t{1}\t{2}\t{3:>5.0f}\t{4:>6.2f}".format(
+                    L, k, lsh.num_queries, accur, touch)
 
 
 if __name__ == "__main__":
@@ -376,23 +378,23 @@ if __name__ == "__main__":
 
     # test lsh versus brute force comparison by running a grid
     # search for the best lsh parameter values for each family
-    tester = LSHTester(points, points[:(num_points / 8)], num_neighbours)
+    tester = LSHTester(points, points[:int(num_points / 5)], num_neighbours)
 
-    args = {'name': 'L2',
-            'metric': L2_norm,
-            'hash_family': L2HashFamily(d, 8 * radius),
-            'k_vals': [2, 4, 8],
-            'L_vals': [2, 4, 8, 16]}
-    tester.run(**args)
-
-    args = {'name': 'L1',
+    args = {'name': 'L1 (Rectilinear)',
             'metric': L1_norm,
-            'hash_family': L1HashFamily(d, 8 * radius),
+            'hash_family': L1HashFamily(d, 20 * radius),
             'k_vals': [2, 4, 8],
             'L_vals': [2, 4, 8, 16]}
     tester.run(**args)
 
-    args = {'name': 'cosine',
+    args = {'name': 'L2 (Euclidean)',
+            'metric': L2_norm,
+            'hash_family': L2HashFamily(d, 20 * radius),
+            'k_vals': [2, 4, 8],
+            'L_vals': [2, 4, 8, 16]}
+    tester.run(**args)
+
+    args = {'name': 'Cosine',
             'metric': Cosine_norm,
             'hash_family': CosineHashFamily(d),
             'k_vals': [16, 32, 64],
