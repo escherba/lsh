@@ -336,7 +336,7 @@ class LSHTester:
                       for query in self.queries]
 
         print name
-        print 'L\tk\tqueries\t%acc\t%touch'
+        print 'L\tk\tqueries\tacc\ttouch'
 
         for k in k_vals:
             # concatenating more hash functions increases selectivity
@@ -352,9 +352,9 @@ class LSHTester:
                     if hits == map(first, lsh_query):
                         correct += 1
 
-                accur = float(correct) / float(lsh.num_queries) * 100.0
-                touch = float(lsh.get_avg_touched()) / float(len(self.points)) * 100.0
-                print "{0}\t{1}\t{2}\t{3:>5.0f}\t{4:>6.2f}".format(
+                accur = float(correct) / float(lsh.num_queries)
+                touch = float(lsh.get_avg_touched()) / float(len(self.points))
+                print "{0}\t{1}\t{2}\t{3:>5.0%}\t{4:>6.2%}".format(
                     L, k, lsh.num_queries, accur, touch)
 
 
