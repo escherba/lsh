@@ -23,14 +23,19 @@ from operator import itemgetter
 '''
 
 
-def first(t):
-    """return first element of a tuple"""
-    return t[0]
+def first(it):
+    """return first element of an iterable"""
+    return it[0]
 
 
-def second(t):
-    """return second element of a tuple"""
-    return t[1]
+def second(it):
+    """return second element of an iterable"""
+    return it[1]
+
+
+def last(it):
+    """return last element of an iterable"""
+    return it[-1]
 
 
 def gapply(n, func, *args, **kwargs):
@@ -332,12 +337,15 @@ class LSHTester:
         :param L_vals:      numbers of hash functions/tables to try in grid
                             search
         """
-        exact_hits = [map(first,
-                          self.linear(query, metric, self.num_neighbours + 1))
-                      for query in self.queries]
+
+        exact_hits = list(self.linear(query, metric, self.num_neighbours + 1)
+                          for query in self.queries)
+        exact_indexes = map(partial(map, first), exact_hits)
+        nearest_radii = map(second, map(last, exact_hits))
 
         print name, len(self.queries), "queries"
-        print 'L\tk\tacc\ttouch\tsec'
+        print "{0:>4} {1:>4} {2:>8} {3:>8} {4:>8} {5:>8} {6:>8}"\
+            .format('L', 'k', 'accur', 'touch', 'ms', 'q-size', 'd-ratio')
 
         for k in k_vals:
             # concatenating more hash functions increases selectivity
@@ -348,17 +356,29 @@ class LSHTester:
                 lsh.index(self.points)
 
                 correct = 0
-                t1 = time.time()
-                for query, hits in izip(self.queries, exact_hits):
+                total_dist_ratio = 0.0
+                total_search_time = 0.0
+                total_result_size = 0.0
+
+                for query, hits, nearest_radius in izip(self.queries, exact_indexes, nearest_radii):
+                    search_time_start = time.time()
                     lsh_query = lsh.query(query, metric, self.num_neighbours + 1)
+                    search_time = time.time() - search_time_start
+                    total_search_time += search_time
+                    total_result_size += len(lsh_query)
+                    for idx, dist in lsh_query:
+                        if dist > nearest_radius:
+                            total_dist_ratio += (dist - nearest_radius) / nearest_radius
                     if hits == map(first, lsh_query):
                         correct += 1
-                t2 = time.time()
 
+                avg_dist_ratio = total_dist_ratio / float(lsh.num_queries)
+                avg_search_time = 1000.0 * total_search_time / float(lsh.num_queries)
+                avg_query_size = total_result_size / float(lsh.num_queries)
                 accur = float(correct) / float(lsh.num_queries)
                 touch = float(lsh.get_avg_touched()) / float(len(self.points))
-                print "{0}\t{1}\t{2:>5.0%}\t{3:>6.2%}\t{4:0.2}".format(
-                    L, k, accur, touch, t2 - t1)
+                print "{0:>4} {1:>4} {2:>8.0%} {3:>8.2%} {4:>8.2} {5:>8.2} {6:>8.2}"\
+                    .format(L, k, accur, touch, avg_query_size, avg_dist_ratio, avg_search_time)
 
 
 if __name__ == "__main__":
@@ -373,26 +393,30 @@ if __name__ == "__main__":
     # seed the dataset with a fixed number of nearest neighbours
     # within a given small "radius"
     num_neighbours = 2
-    radius = 0.1
+    radius = 1.0
     for point in points[:num_points]:
         for i in xrange(num_neighbours):
             points.append([x + random_uniform(-radius, radius)
                            for x in point])
 
+    import json
+    with open('data.txt', 'w') as outfile:
+        json.dump(points, outfile)
+
     # test lsh versus brute force comparison by running a grid
     # search for the best lsh parameter values for each family
-    tester = LSHTester(points, points[:int(num_points / 5)], num_neighbours)
+    tester = LSHTester(points, points[:int(num_points / 10)], num_neighbours)
 
     args = {'name': 'L1 (Rectilinear)',
             'metric': L1_norm,
-            'hash_family': L1HashFamily(d, 20 * radius),
+            'hash_family': L1HashFamily(d, 10 * radius),
             'k_vals': [2, 4, 8],
             'L_vals': [2, 4, 8, 16]}
     tester.run(**args)
 
     args = {'name': 'L2 (Euclidean)',
             'metric': L2_norm,
-            'hash_family': L2HashFamily(d, 20 * radius),
+            'hash_family': L2HashFamily(d, 10 * radius),
             'k_vals': [2, 4, 8],
             'L_vals': [2, 4, 8, 16]}
     tester.run(**args)
