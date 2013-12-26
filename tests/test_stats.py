@@ -91,14 +91,12 @@ class LSHTester:
 
 
 class MyTestCase(unittest.TestCase):
-    def test_something(self):
-        self.assertEqual(True, False)
 
     def test_stats(self):
         # create a test dataset of vectors of non-negative integers
         d = 5
         xmax = 20
-        num_points = 1000
+        num_points = 10
         points = lsh.lapply(num_points,  # rows (number of vectors)
                             lsh.lapply, d,   # columns (vector cardinality)
                             random_int, 0, xmax)

@@ -71,8 +71,7 @@ class L1Hash(Hash):
     def hash(self, vec):
         float_gen = ((vec[idx] - s) / self.w
                      for idx, s in enumerate(self.r))
-        gen = imap(int, float_gen)
-        return hash(tuple(gen))
+        return hash(tuple(imap(int, float_gen)))
 
 
 class L2Hash(Hash):
@@ -89,7 +88,8 @@ class L2Hash(Hash):
         self.w = w
 
     def hash(self, vec):
-        return int((dot(vec, self.r) + self.b) / self.w)
+        val = (dot(vec, self.r) + self.b) / self.w
+        return int(val)
 
 
 class CosineHash(Hash):
@@ -104,7 +104,7 @@ class CosineHash(Hash):
 class HashFamily:
 
     def __init__(self, size):
-        self.size = size
+        self.size = int(size)
 
     @abstractmethod
     def get_hash_func(self):
@@ -131,7 +131,7 @@ class L1HashFamily(HashFamily):
         :param w: width of the quantization bin
         """
         HashFamily.__init__(self, size)
-        self.w = w
+        self.w = float(w)
 
     def get_hash_func(self):
         """ initialize each L1Hash with a different random
@@ -153,7 +153,7 @@ class L2HashFamily(HashFamily):
         :param w: width of the quantization bin
         """
         HashFamily.__init__(self, size)
-        self.w = w
+        self.w = float(w)
 
     def get_hash_func(self):
         """initialize each L2Hash with a different random projection vector
