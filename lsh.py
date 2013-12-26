@@ -9,6 +9,7 @@ nearest neighbor in high dimensions"
 http://people.csail.mit.edu/indyk/p117-andoni.pdf
 """
 
+import time
 from abc import abstractmethod
 from itertools import izip, imap, chain
 from functools import partial
@@ -287,8 +288,8 @@ class LSHIndex:
         self.num_queries += 1
 
         # re-rank candidates according to supplied metric
-        return sorted(((c, metric(query, self.points[c]))
-                       for c in candidates),
+        return sorted(((idx, metric(query, self.points[idx]))
+                       for idx in candidates),
                       key=itemgetter(1))[:max_results]
 
     def get_avg_touched(self):
@@ -335,8 +336,8 @@ class LSHTester:
                           self.linear(query, metric, self.num_neighbours + 1))
                       for query in self.queries]
 
-        print name
-        print 'L\tk\tqueries\tacc\ttouch'
+        print name, len(self.queries), "queries"
+        print 'L\tk\tacc\ttouch\tsec'
 
         for k in k_vals:
             # concatenating more hash functions increases selectivity
@@ -347,15 +348,17 @@ class LSHTester:
                 lsh.index(self.points)
 
                 correct = 0
+                t1 = time.time()
                 for query, hits in izip(self.queries, exact_hits):
                     lsh_query = lsh.query(query, metric, self.num_neighbours + 1)
                     if hits == map(first, lsh_query):
                         correct += 1
+                t2 = time.time()
 
                 accur = float(correct) / float(lsh.num_queries)
                 touch = float(lsh.get_avg_touched()) / float(len(self.points))
-                print "{0}\t{1}\t{2}\t{3:>5.0%}\t{4:>6.2%}".format(
-                    L, k, lsh.num_queries, accur, touch)
+                print "{0}\t{1}\t{2:>5.0%}\t{3:>6.2%}\t{4:0.2}".format(
+                    L, k, accur, touch, t2 - t1)
 
 
 if __name__ == "__main__":
@@ -397,6 +400,6 @@ if __name__ == "__main__":
     args = {'name': 'Cosine',
             'metric': Cosine_norm,
             'hash_family': CosineHashFamily(d),
-            'k_vals': [16, 32, 64],
-            'L_vals': [2, 4, 8, 16]}
+            'k_vals': [32, 64, 128],
+            'L_vals': [1, 2, 4, 8]}
     tester.run(**args)
